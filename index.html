@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Центральный Чат-Бот</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      height: 100vh;
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: background 0.5s ease;
+    }
+
+    #chat-container {
+      width: 400px;
+      height: 600px;
+      background: rgba(0, 0, 0, 0.75);
+      border-radius: 15px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 0 20px rgba(0,0,0,0.6);
+      overflow: hidden;
+    }
+
+    #moodButtons {
+      text-align: center;
+      background: #111;
+      padding: 10px;
+    }
+
+    #moodButtons button {
+      margin: 0 6px;
+      padding: 8px 16px;
+      background: #00bcd4;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    #chat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .message {
+      margin: 8px 0;
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 14px;
+      max-width: 80%;
+      word-wrap: break-word;
+    }
+
+    .user {
+      background: rgba(255, 255, 255, 0.2);
+      align-self: flex-end;
+      text-align: right;
+    }
+
+    .bot {
+      background: rgba(0, 188, 212, 0.3);
+      align-self: flex-start;
+      text-align: left;
+    }
+
+    .time {
+      font-size: 10px;
+      opacity: 0.6;
+      margin-top: 4px;
+    }
+
+    #controls {
+      display: flex;
+      padding: 10px;
+      background: #111;
+    }
+
+    #input {
+      flex: 1;
+      padding: 8px;
+      font-size: 14px;
+      border: none;
+      border-radius: 5px;
+    }
+
+    #sendBtn {
+      margin-left: 6px;
+      background: #00bcd4;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 8px 12px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<div id="chat-container">
+  <div id="moodButtons">
+    <button onclick="setMood('sad')">Грусть</button>
+    <button onclick="setMood('happy')">Радость</button>
+  </div>
+  <div id="chat"></div>
+  <div id="controls">
+    <input type="text" id="input" placeholder="Напиши..." />
+    <button id="sendBtn" onclick="sendMessage()">⮞</button>
+  </div>
+</div>
+
+<audio id="bg-music" loop></audio>
+
+<script>
+  const chat = document.getElementById('chat');
+  const input = document.getElementById('input');
+  const music = document.getElementById('bg-music');
+  let mood = 'neutral';
+
+  // Природный фон по умолчанию
+  document.body.style.background = 'url("https://www.w3schools.com/w3images/mountains.jpg") no-repeat center center fixed';
+  document.body.style.backgroundSize = 'cover';
+
+  const replies = {
+    sad: [
+      'Я с тобой в этой грусти...',
+      'Иногда грусть помогает нам понять себя.',
+      'Обними себя мысленно от меня.',
+      'Пусть музыка дождя успокоит тебя...',
+      'Дыши глубже. Всё пройдёт.'
+    ],
+    happy: [
+      'Отлично! Продолжай улыбаться!',
+      'Ура! Рад за тебя!',
+      'Так держать! Твой позитив заряжает!',
+      'Жизнь прекрасна, правда?',
+      'Продолжай делиться этой энергией!'
+    ],
+    neutral: [
+      'Как ты себя чувствуешь?',
+      'Расскажи что-то интересное.',
+      'Я здесь, просто поболтать.',
+      'Хочешь переключить настроение?'
+    ]
+  };
+
+  function setMood(newMood) {
+    mood = newMood;
+    if (mood === 'sad') {
+      // Черный фон для грусти
+      document.body.style.background = '#000000';
+      music.src = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'; // Звук дождя
+    } else if (mood === 'happy') {
+      // Радужный фон для радости
+      document.body.style.background = 'linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet)';
+      music.src = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3'; // Весёлый трек
+    }
+    music.play();
+  }
+
+  function sendMessage() {
+    const text = input.value.trim();
+    if (!text) return;
+    addMessage(text, 'user');
+    input.value = '';
+
+    setTimeout(() => {
+      const reply = getRandomReply();
+      addMessage(reply, 'bot');
+      speak(reply);
+    }, 500);
+  }
+
+  function addMessage(text, sender) {
+    const msg = document.createElement('div');
+    msg.className = `message ${sender}`;
+    const time = new Date().toLocaleTimeString().slice(0,5);
+    msg.innerHTML = `${text}<div class="time">${time}</div>`;
+    chat.appendChild(msg);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  function getRandomReply() {
+    const list = replies[mood] || replies.neutral;
+    return list[Math.floor(Math.random() * list.length)];
+  }
+
+  function speak(text) {
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'ru-RU';
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utter);
+  }
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') sendMessage();
+  });
+</script>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
